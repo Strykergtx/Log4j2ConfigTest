@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="debug">
+    <Appenders>
+
+        <Console name="LogToConsole" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+        </Console>
+
+        <RollingFile name="LogToRollingFile" fileName="logs/app.log"
+                     filePattern="logs/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz">
+            <PatternLayout>
+                <Pattern>%d %p %c{1.} [%t] %m%n</Pattern>
+            </PatternLayout>
+            <Policies>
+                <TimeBasedTriggeringPolicy />
+                <SizeBasedTriggeringPolicy size="20KB"/>
+            </Policies>
+        </RollingFile>
+
+    </Appenders>
+
+    <Loggers>
+        <!-- avoid duplicated logs with additivity=false -->
+        <!-- We have configured one RollingFileAppender Logger for the Test1 and Test2 classes,other classes are not configured   -->
+        <Logger name="mcoc.Test1" level="debug" additivity="false">
+            <AppenderRef ref="LogToRollingFile"/>
+        </Logger>
+
+        <Logger name="mcoc.Test2" level="debug" additivity="false">
+            <AppenderRef ref="LogToRollingFile"/>
+        </Logger>
+
+        <Root level="ALL">
+<!--            <AppenderRef ref="LogToConsole" />      &lt;!&ndash; All other classes' log will be logged to console here cos of root logger  &ndash;&gt;-->
+            <AppenderRef ref="LogToConsole" level ="fatal"/>   <!-- You can configure level for each Appender here, so only fatal will be logged to console here -->
+<!--            <AppenderRef ref="LogToRollingFile"/>-->
+        </Root>
+
+    </Loggers>
+
+</Configuration>

@@ -9,6 +9,7 @@ import org.apache.logging.log4j.core.appender.rolling.CompositeTriggeringPolicy;
 import org.apache.logging.log4j.core.appender.rolling.DefaultRolloverStrategy;
 import org.apache.logging.log4j.core.appender.rolling.SizeBasedTriggeringPolicy;
 import org.apache.logging.log4j.core.appender.rolling.TimeBasedTriggeringPolicy;
+import org.apache.logging.log4j.core.appender.rolling.action.*;
 import org.apache.logging.log4j.core.config.*;
 import org.apache.logging.log4j.core.config.builder.api.*;
 import org.apache.logging.log4j.core.config.builder.impl.BuiltConfiguration;
@@ -90,21 +91,32 @@ public class ChampionLogger {
 
             //RollingFileAppender Policies,Strategy and Layout
             TimeBasedTriggeringPolicy timeBasedTriggeringPolicy = TimeBasedTriggeringPolicy.newBuilder().withInterval(1).withModulate(true).build();
-            SizeBasedTriggeringPolicy sizeBasedTriggeringPolicy = SizeBasedTriggeringPolicy.createPolicy("1MB");
-            DefaultRolloverStrategy   defaultRolloverStrategy  = DefaultRolloverStrategy.newBuilder().withMax("10").build();
+            SizeBasedTriggeringPolicy sizeBasedTriggeringPolicy = SizeBasedTriggeringPolicy.createPolicy("200");
+            //DefaultRolloverStrategy   defaultRolloverStrategy  = DefaultRolloverStrategy.newBuilder().withMax("2").build();
+
+            PathCondition[] nestedConditions  = PathCondition.copy(IfAccumulatedFileCount.createFileCountCondition(3));
+            PathCondition[] pathConditions = PathCondition.copy(IfFileName.createNameCondition(fileName+"-*.log.gz" ,null,nestedConditions));
+
+            Action deleteAction =DeleteAction.createDeleteAction("logs/",false,1,false,null,pathConditions,null,config);
+            Action[] actions = new Action[] {deleteAction};
+            DefaultRolloverStrategy defaultRolloverStrategy =DefaultRolloverStrategy.newBuilder().withMax("2").withCustomActions(actions).build();
+
             PatternLayout layout = PatternLayout.newBuilder().withPattern("%d %p %c{1.} [%t] %m%n").build();
 
             //The actual RollingFileAppender construction
             final RollingFileAppender rollingFileAppender = RollingFileAppender.newBuilder()
                     .setName("RollingFileAppenderFor"+fileName)
                     .withFileName("logs/"+ fileName+".log")
+                    .withFilePattern("logs/"+ fileName+"-%d{yyyy-MM-dd-HH-mm}-%i.log.gz")
                     .withAppend(true)
                     .setConfiguration(config)
                     .setLayout(layout)
-                    .withFilePattern("logs/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz")
                     .withPolicy(CompositeTriggeringPolicy.createPolicy(timeBasedTriggeringPolicy,sizeBasedTriggeringPolicy))
                     .withStrategy(defaultRolloverStrategy)
                     .build();
+
+
+
 
             //Add the RollingFileAppender just created to the current config(Modifying the XML config)
             rollingFileAppender.start();

@@ -13,8 +13,7 @@ public class Test1 {
 
         //Example 1  - Doing it in this order, you see the logs after addLoggerWithResetAndLog do not work as configured in the log4j2.xml
         //Because the Configurator.reconfigure/initialize will replace the current configuration
-        ChampionLogger.addLoggerWithResetAndLog(Mephisto.logString, "Mephisto");
-
+       // ChampionLogger.addLoggerWithResetAndLog(Mephisto.logString, "Mephisto");
         Logger logger = LogManager.getLogger(Test1.class);
 
         logger.info("INFO FROM Accumulator");

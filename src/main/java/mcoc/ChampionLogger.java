@@ -4,6 +4,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.appender.AsyncAppender;
 import org.apache.logging.log4j.core.appender.RollingFileAppender;
 import org.apache.logging.log4j.core.appender.rolling.CompositeTriggeringPolicy;
 import org.apache.logging.log4j.core.appender.rolling.DefaultRolloverStrategy;
@@ -95,9 +96,13 @@ public class ChampionLogger {
             //DefaultRolloverStrategy   defaultRolloverStrategy  = DefaultRolloverStrategy.newBuilder().withMax("2").build();
 
             PathCondition[] nestedConditions  = PathCondition.copy(IfAccumulatedFileCount.createFileCountCondition(3));
-            PathCondition[] pathConditions = PathCondition.copy(IfFileName.createNameCondition(fileName+"-*.log.gz" ,null,nestedConditions));
+            //for depth 1, under base folder
+//            PathCondition[] pathConditions = PathCondition.copy(IfFileName.createNameCondition(fileName+"-*.log.gz" ,null,nestedConditions));
 
-            Action deleteAction =DeleteAction.createDeleteAction("logs/",false,1,false,null,pathConditions,null,config);
+            //For sub-folders with depth-2
+            PathCondition[] pathConditions = PathCondition.copy(IfFileName.createNameCondition("*/"+fileName+"-*.log.gz" ,null,nestedConditions));
+
+            Action deleteAction =DeleteAction.createDeleteAction("logs/",false,2,false,null,pathConditions,null,config);
             Action[] actions = new Action[] {deleteAction};
             DefaultRolloverStrategy defaultRolloverStrategy =DefaultRolloverStrategy.newBuilder().withMax("2").withCustomActions(actions).build();
 
@@ -107,15 +112,14 @@ public class ChampionLogger {
             final RollingFileAppender rollingFileAppender = RollingFileAppender.newBuilder()
                     .setName("RollingFileAppenderFor"+fileName)
                     .withFileName("logs/"+ fileName+".log")
-                    .withFilePattern("logs/"+ fileName+"-%d{yyyy-MM-dd-HH-mm}-%i.log.gz")
+                   .withFilePattern("logs/%d{yyyy-MM-dd-HH-mm}/"+ fileName +"-%d{yyyy-MM-dd-HH-mm}-%i.log.gz")
+                  //  .withFilePattern("logs/"+ fileName +"-%d{yyyy-MM-dd-HH-mm}.log.%i.gz")
                     .withAppend(true)
                     .setConfiguration(config)
                     .setLayout(layout)
                     .withPolicy(CompositeTriggeringPolicy.createPolicy(timeBasedTriggeringPolicy,sizeBasedTriggeringPolicy))
                     .withStrategy(defaultRolloverStrategy)
                     .build();
-
-
 
 
             //Add the RollingFileAppender just created to the current config(Modifying the XML config)
@@ -131,6 +135,14 @@ public class ChampionLogger {
             loggerConfig.addAppender(rollingFileAppender, null, null);
             config.addLogger(fileName,loggerConfig);
             ctx.updateLoggers();
+
+//            AsyncAppender asyncAppender = AsyncAppender.newBuilder().setName("AsyncAppenderFor"+fileName)
+//                    .setBufferSize(500)
+//                    .setConfiguration(config)
+//                    .setAppenderRefs(refs).build();
+//
+//            asyncAppender.start();
+//            config.addAppender(asyncAppender);
 
             //Get the logger back from LogManager and use it to log
             logger = LogManager.getLogger(fileName);

@@ -20,6 +20,6 @@ public class Collosus  {
         System.out.println(logger.getName());
 
 
-
     }
+
 }
